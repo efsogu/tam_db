@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "if [ \"$VERCEL_PROJECT_ID\" = \"prj_s83zASgit2THoH3HXHJM5wq1XSPh\" ]; then exit 0; else exit 1; fi",
   "buildCommand": "npm run test:revision && npm run test:api-normalization && npm run test:teamgram-sync && npm run build && npm run test:preview",
   "outputDirectory": "dist",
   "rewrites": [
