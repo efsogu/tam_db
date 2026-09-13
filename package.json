@@ -1,0 +1,8 @@
+{
+  "name": "teamgram-teklif-analiz-merkezi",
+  "private": true,
+  "scripts": {
+    "test:revision": "node revision-dedupe.test.js && node revision-dedupe.transitive.test.js",
+    "build": "node scripts/build-preview.cjs"
+  }
+}
