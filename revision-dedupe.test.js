@@ -3,6 +3,8 @@
 const assert = require("assert");
 const { parentProposalId, rootProposalId, latestByRevisionChain } = require("./revision-dedupe");
 
+// Canlı doğrulanmış TeamGram revizyon zinciri (13.09.2026):
+// 29533385 -> 29533411, Proposals/Get ParentProposal.Id = 29533385, HTTP 200.
 const original = {
   Id: 29533385,
   status: "Revize edildi",
