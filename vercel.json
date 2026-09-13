@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run test:revision && npm run test:api-normalization && npm run test:proposal-sync-runtime && npm run build && npm run test:preview",
-  "outputDirectory": "dist"
+  "buildCommand": "npm run test:revision && npm run test:api-normalization && npm run test:teamgram-sync && npm run build && npm run test:preview",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/dashboard", "destination": "/index.html" }
+  ]
 }

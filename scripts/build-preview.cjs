@@ -1,98 +1,56 @@
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
+const zlib = require("node:zlib");
+const crypto = require("node:crypto");
 
-const root = path.join(__dirname, "..");
-const sourcePath = path.join(root, "index.html");
-const distDir = path.join(root, "dist");
-const distIndex = path.join(distDir, "index.html");
+const ROOT = path.resolve(__dirname, "..");
+const SOURCE_DIR = path.join(ROOT, "sites-v35");
+const SOURCE_PARTS = fs.readdirSync(SOURCE_DIR).filter(name => /^chunk_\d{2}\.txt$/.test(name)).sort().map(name => path.join(SOURCE_DIR, name));
+const BROWSER_SYNC = path.join(ROOT, "scripts", "browser-teamgram-sync.js");
+const OUT = path.join(ROOT, "dist");
+const EXPECTED = {
+  dashboard: "eed3ecf48a2d90943d9b08140774971cbea6c6e74744071848018e643bcfe0f5"
+};
 
-const input = fs.readFileSync(sourcePath, "utf8");
+function sha(buf){ return crypto.createHash("sha256").update(buf).digest("hex"); }
+function inflate(parts, expected){ if(!parts.length) throw new Error("v35 source chunks missing"); const b64=parts.map(file=>fs.readFileSync(file,"utf8").trim()).join(""); const compressed=Buffer.from(b64,"base64"); const buf=zlib.brotliDecompressSync(compressed); const actual=sha(buf); if(actual!==expected) throw new Error(`v35 source hash mismatch: ${actual}`); return buf; }
+function replaceOnce(source, needle, replacement, label){ const first=source.indexOf(needle); if(first<0) throw new Error(`${label}: anchor not found`); if(source.indexOf(needle, first+needle.length)>=0) throw new Error(`${label}: anchor not unique`); return source.slice(0,first)+replacement+source.slice(first+needle.length); }
 
-const oldBlock = `    function isRevisedOffer(offer) {
-      return isRevisedStatus(offer?.status || offer?.durum || '');
-    }
+fs.rmSync(OUT,{recursive:true,force:true});
+fs.mkdirSync(OUT,{recursive:true});
 
-    function calculationOffers(offers) {
-      return (offers || []).filter(offer => !isRevisedOffer(offer));
-    }
+let html=inflate(SOURCE_PARTS,EXPECTED.dashboard).toString("utf8");
+html=replaceOnce(html,'<script src="/vendor/xlsx.full.min.js"></script>','<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>',"pinned XLSX CDN");
+html=replaceOnce(html,'<script src="/vendor/chart.umd.min.js"></script>','<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>',"pinned Chart.js CDN");
+const browserSync=fs.readFileSync(BROWSER_SYNC,"utf8");
 
-    function calculationOfferCount(offers) {
-      return calculationOffers(offers).length;
-    }`;
+const oldCalc=`    function calculationOffers(offers) {\n      return (offers || []).filter(offer => !isRevisedOffer(offer)).map(correctCachedSpareBmdOffer);\n    }`;
+const newCalc=`    function proposalRecordId(offer) {\n      const n = Number(offer?.id ?? offer?.Id ?? offer?.proposalId ?? offer?.ProposalId);\n      return Number.isSafeInteger(n) && n > 0 ? n : null;\n    }\n\n    function parentProposalRecordId(offer) {\n      const n = Number(offer?.parentProposalId ?? offer?.ParentProposalId ?? offer?.parentProposal?.id ?? offer?.ParentProposal?.Id);\n      return Number.isSafeInteger(n) && n > 0 ? n : null;\n    }\n\n    function revisionRootProposalId(offer, byId, seen = new Set()) {\n      const ownId = proposalRecordId(offer);\n      const parentId = parentProposalRecordId(offer);\n      if (!parentId) return ownId;\n      if (!byId?.has(parentId) || seen.has(parentId)) return parentId;\n      const nextSeen = new Set(seen);\n      if (ownId) nextSeen.add(ownId);\n      return revisionRootProposalId(byId.get(parentId), byId, nextSeen) || parentId;\n    }\n\n    function latestOffersByRevisionChain(offers) {\n      const source = Array.isArray(offers) ? offers : [];\n      const byId = new Map();\n      source.forEach(offer => { const id = proposalRecordId(offer); if (id) byId.set(id, offer); });\n      const groups = new Map();\n      source.forEach((offer,index) => {\n        const rootId = revisionRootProposalId(offer, byId);\n        const fallbackNo = String(offer?.no || '').trim();\n        const key = rootId ? \`id:\${rootId}\` : fallbackNo ? \`no:\${fallbackNo}\` : \`row:\${index}\`;\n        if (!groups.has(key)) groups.set(key, []);\n        groups.get(key).push(offer);\n      });\n      return [...groups.values()].map(group => group.slice().sort((a,b) => {\n        const at = toDate(a?.modifiedAt || a?.lastStatusAt || a?.createdAt)?.getTime?.() || 0;\n        const bt = toDate(b?.modifiedAt || b?.lastStatusAt || b?.createdAt)?.getTime?.() || 0;\n        if (bt !== at) return bt - at;\n        return (proposalRecordId(b) || 0) - (proposalRecordId(a) || 0);\n      })[0]);\n    }\n\n    function calculationOffers(offers) {\n      return latestOffersByRevisionChain(offers || []).filter(offer => !isRevisedOffer(offer)).map(correctCachedSpareBmdOffer);\n    }`;
+html=replaceOnce(html,oldCalc,newCalc,"revision-chain calculationOffers");
 
-const newBlock = `    function proposalRecordId(offer) {
-      const n = Number(offer?.id ?? offer?.Id ?? offer?.proposalId ?? offer?.ProposalId);
-      return Number.isSafeInteger(n) && n > 0 ? n : null;
-    }
+const oldReturn=`        no: offerRow['No'],\n        id: offerRow['Id'],\n        customer: String(offerRow['Müşteri'] || '').trim() || '-',`;
+const newReturn=`        no: offerRow['No'],\n        id: offerRow['Id'],\n        parentProposalId: offerRow['ParentProposalId'] ?? null,\n        modifiedAt: toDate(offerRow['Güncelleme tarihi']) || lastStatusAt || createdAt,\n        customer: String(offerRow['Müşteri'] || '').trim() || '-',`;
+html=replaceOnce(html,oldReturn,newReturn,"buildOfferRecord lineage fields");
 
-    function parentProposalRecordId(offer) {
-      const n = Number(offer?.parentProposalId ?? offer?.ParentProposalId ?? offer?.parentProposal?.id ?? offer?.ParentProposal?.Id);
-      return Number.isSafeInteger(n) && n > 0 ? n : null;
-    }
+const oldButtons=`                <button id="loadCachedAnalysisBtn" class="btn btn-secondary" type="button">Son Analizi Yükle</button>\n                <button id="clearAnalysisCacheBtn" class="btn btn-secondary" type="button">Önbelleği Temizle</button>`;
+const newButtons=`                <button id="teamgramSyncBtn" class="btn btn-secondary" type="button">TeamGram’dan Güncelle</button>\n                <button id="loadCachedAnalysisBtn" class="btn btn-secondary" type="button">Son Analizi Yükle</button>\n                <button id="clearAnalysisCacheBtn" class="btn btn-secondary" type="button">Önbelleği Temizle</button>`;
+html=replaceOnce(html,oldButtons,newButtons,"TeamGram sync button");
 
-    function revisionRootProposalId(offer, byId, seen = new Set()) {
-      const ownId = proposalRecordId(offer);
-      const parentId = parentProposalRecordId(offer);
-      if (!parentId) return ownId;
-      if (!byId?.has(parentId)) return parentId;
-      if (seen.has(parentId)) return parentId;
-      const nextSeen = new Set(seen);
-      if (ownId) nextSeen.add(ownId);
-      return revisionRootProposalId(byId.get(parentId), byId, nextSeen) || parentId;
-    }
+const injection=`\n<script>\n${browserSync}\n</script>\n`;
+const bodyClose=html.lastIndexOf("</body>");
+if(bodyClose<0) throw new Error("body close not found");
+html=html.slice(0,bodyClose)+injection+html.slice(bodyClose);
 
-    function latestByRevisionChainForCalculation(offers) {
-      const source = Array.isArray(offers) ? offers : [];
-      const byId = new Map();
-      source.forEach(offer => {
-        const id = proposalRecordId(offer);
-        if (id) byId.set(id, offer);
-      });
-      const groups = new Map();
-      source.forEach((offer, index) => {
-        const rootId = revisionRootProposalId(offer, byId);
-        const fallbackNo = String(offer?.no ?? offer?.teklifNo ?? '').trim();
-        const key = rootId ? 'id:' + rootId : fallbackNo ? 'no:' + fallbackNo : 'row:' + index;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(offer);
-      });
-      return [...groups.values()].map(group => group.slice().sort((a, b) => {
-        const at = new Date(a?.modifiedAt ?? a?.ModifiedDate ?? a?.lastStatusAt ?? a?.createdAt ?? 0).getTime() || 0;
-        const bt = new Date(b?.modifiedAt ?? b?.ModifiedDate ?? b?.lastStatusAt ?? b?.createdAt ?? 0).getTime() || 0;
-        if (bt !== at) return bt - at;
-        return (proposalRecordId(b) || 0) - (proposalRecordId(a) || 0);
-      })[0]);
-    }
-
-    function isRevisedOffer(offer) {
-      return isRevisedStatus(offer?.status || offer?.durum || '');
-    }
-
-    function calculationOffers(offers) {
-      return latestByRevisionChainForCalculation(offers).filter(offer => !isRevisedOffer(offer));
-    }
-
-    function calculationOfferCount(offers) {
-      return calculationOffers(offers).length;
-    }`;
-
-const occurrences = input.split(oldBlock).length - 1;
-if (occurrences !== 1) {
-  throw new Error(`Expected exactly 1 calculationOffers block, found ${occurrences}`);
-}
-
-const output = input.replace(oldBlock, newBlock);
-fs.rmSync(distDir, { recursive: true, force: true });
-fs.mkdirSync(distDir, { recursive: true });
-fs.writeFileSync(distIndex, output, "utf8");
-fs.writeFileSync(path.join(distDir, "revision-chain-proof.json"), JSON.stringify({
-  ok: true,
-  feature: "teamgram-revision-chain",
-  parentProposalVerified: true,
-  livePair: { original: 29533385, revision: 29533411 },
-  buildTime: new Date().toISOString()
-}, null, 2));
-
-console.log("preview build PASS: revision-chain logic injected into dist/index.html");
+fs.writeFileSync(path.join(OUT,"index.html"),html);
+fs.writeFileSync(path.join(OUT,"dashboard.html"),html);
+fs.writeFileSync(path.join(OUT,"v35-source-proof.json"),JSON.stringify({
+  ok:true,
+  baseline:"stock_latest_snapshot_v35_package",
+  dashboardSourceSha256:EXPECTED.dashboard,
+  generatedSha256:sha(Buffer.from(html)),
+  integration:"teamgram-proposal-sync-v1",
+  generatedAt:new Date().toISOString()
+},null,2));
+console.log(`v35 baseline build: PASS · ${html.length} chars`);
