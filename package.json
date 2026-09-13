@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test:revision": "node revision-dedupe.test.js && node revision-dedupe.transitive.test.js",
+    "test:api-normalization": "node teamgram-proposal-normalizer.test.js",
     "build": "node scripts/build-preview.cjs",
     "test:preview": "node scripts/verify-preview.cjs"
   }
