@@ -3,9 +3,13 @@
 const {
   DEFAULT_DOMAIN,
   positiveInt,
-  fetchProposalIndexPage,
-  fetchProposalBundle
+  fetchJson,
+  fingerprintIndexRecord,
+  rowsForProposal,
+  parentProposalId
 } = require("../teamgram-sync-core");
+
+const BASE_URL = "https://api.teamgram.com";
 
 function tokenFromEnv() { return process.env.TEAMGRAM_API_TOKEN || process.env.TEAMGRAM_TOKEN || ""; }
 function headers(res) {
@@ -13,6 +17,54 @@ function headers(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
+}
+function unwrapData(payload) {
+  if (payload && typeof payload === "object" && Object.prototype.hasOwnProperty.call(payload, "Data")) {
+    return payload.Data;
+  }
+  return payload;
+}
+function apiUrl(domain, path, params = {}) {
+  const url = new URL(`/${domain}/${path}`, BASE_URL);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+  });
+  return url.toString();
+}
+async function fetchProposalIndexPage({ token, domain = DEFAULT_DOMAIN, page = 1, pageSize = 100, fid = 0 }) {
+  const raw = await fetchJson(apiUrl(domain, "Proposals/Index", { page, pagesize: pageSize, letter: "", fid }), token);
+  const payload = unwrapData(raw);
+  const list = Array.isArray(payload?.List)
+    ? payload.List
+    : Array.isArray(payload?.Proposals)
+      ? payload.Proposals
+      : Array.isArray(payload)
+        ? payload
+        : [];
+  const rawCount = payload?.ProposalCount ?? payload?.count ?? payload?.Count ?? raw?.ProposalCount ?? raw?.count ?? raw?.Count;
+  const count = Number(rawCount);
+  return {
+    page,
+    pageSize,
+    count: Number.isFinite(count) && count >= 0 ? count : null,
+    list,
+    fingerprints: list
+      .map(record => ({ id: positiveInt(record?.Id ?? record?.id), fingerprint: fingerprintIndexRecord(record) }))
+      .filter(record => record.id && record.fingerprint)
+  };
+}
+async function fetchProposalBundle({ token, domain = DEFAULT_DOMAIN, id }) {
+  id = positiveInt(id);
+  if (!id) throw new Error("invalid_proposal_id");
+  const [proposalRaw, statusRaw] = await Promise.all([
+    fetchJson(apiUrl(domain, "Proposals/Get", { id }), token),
+    fetchJson(apiUrl(domain, "Proposals/StatusLog", { id }), token)
+  ]);
+  const proposal = unwrapData(proposalRaw);
+  const status = unwrapData(statusRaw);
+  if (!proposal || typeof proposal !== "object" || Array.isArray(proposal)) throw new Error("proposal_payload_missing");
+  const rows = rowsForProposal(proposal, status);
+  return { id, parentProposalId: parentProposalId(proposal), ...rows };
 }
 function publicBundle(bundle) {
   return {
@@ -24,13 +76,13 @@ function publicBundle(bundle) {
   };
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   headers(res);
   if (req.method !== "GET") { res.setHeader("Allow", "GET"); return res.status(405).json({ ok:false, error:"method_not_allowed" }); }
   const token = tokenFromEnv();
   const domain = String(process.env.TEAMGRAM_DOMAIN || DEFAULT_DOMAIN).trim() || DEFAULT_DOMAIN;
   if (String(req.query?.health || "") === "1") {
-    return res.status(200).json({ ok:true, configured:Boolean(token), domain, secretExposed:false, modes:["index","detail"] });
+    return res.status(200).json({ ok:true, configured:Boolean(token), domain, secretExposed:false, modes:["index","detail"], responseWrapperSafe:true });
   }
   if (!token) return res.status(503).json({ ok:false, error:"teamgram_token_not_configured" });
 
@@ -69,4 +121,7 @@ module.exports = async function handler(req, res) {
       secretExposed:false
     });
   }
-};
+}
+
+module.exports = handler;
+module.exports._test = { unwrapData, fetchProposalIndexPage, fetchProposalBundle };
