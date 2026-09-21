@@ -1,0 +1,29 @@
+{
+  "engine_version": "v0.32",
+  "suite": "PRJ-026 bounded regression",
+  "test_count": 14,
+  "pass_count": 14,
+  "fail_count": 0,
+  "result": "PASS",
+  "tests": [
+    {"test":"test_v0_6.py","status":"PASS"},
+    {"test":"test_v0_26_oidc_identity.py","status":"PASS"},
+    {"test":"test_v0_26_oidc_api.py","status":"PASS"},
+    {"test":"test_v0_26_postgres_schema.py","status":"PASS"},
+    {"test":"test_v0_26_supabase_factory.py","status":"PASS"},
+    {"test":"test_v0_27_identity_hardening.py","status":"PASS"},
+    {"test":"test_v0_27_production_security.py","status":"PASS"},
+    {"test":"test_v0_27_ui_static.py","status":"PASS"},
+    {"test":"test_v0_28_strict_csp.py","status":"PASS"},
+    {"test":"test_v0_29_fixture_independent_acceptance.py","status":"PASS"},
+    {"test":"test_v0_30_profile_reconciliation.py","status":"PASS"},
+    {"test":"test_v0_31_case005_006_candidate_acceptance.py","status":"PASS"},
+    {"test":"test_v0_31_case006_scope_filter.py","status":"PASS"},
+    {"test":"test_v0_32_supabase_rls_contract.py","status":"PASS"}
+  ],
+  "notes": [
+    "First aggregate run exceeded the container execution time after 10 PASS tests.",
+    "Remaining 4 tests were executed separately and all passed.",
+    "CASE_005/006 candidate fixtures were restored from verified Drive validation ZIPs before the final candidate acceptance test."
+  ]
+}
