@@ -1,0 +1,45 @@
+{
+  "case_id": "CASE_007",
+  "canonical_case_id": "BA-2026-ANKARA-SINCAN-0007",
+  "batch_id": "CASE_007-HR-20261014-01",
+  "approved_by": "Erdem",
+  "approved_at": "2026-10-14T00:17:33+03:00",
+  "scope": "3. Kısım – Datex Anestezi Cihazları only",
+  "decision_summary": {
+    "APPROVE_FOUND": 17,
+    "CONFIRM_AMBIGUITY": 4,
+    "APPROVE_CONFLICT_PRESERVED": 1,
+    "total": 22
+  },
+  "guardrails": {
+    "preserve_extraction_status": true,
+    "promote_ambiguous_to_found": false,
+    "promote_conflict_to_found": false,
+    "full_75_complete": false,
+    "unknown_fields": 29
+  },
+  "decisions": [
+    {"field_label":"Yedek Parça Dahiliyeti","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"PM Kit Dahiliyeti","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Yazılım","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Kullanıcı Eğitimi","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Teknik Eğitim","extraction_status":"AMBIGUOUS","action":"CONFIRM_AMBIGUITY"},
+    {"field_label":"Yıllık PM adedi","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"PM periyodu","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"İlk PM son tarihi","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"PM kaçırma cezası","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Yerinde müdahale süresi","extraction_status":"AMBIGUOUS","action":"CONFIRM_AMBIGUITY"},
+    {"field_label":"Parçasız onarım süresi","extraction_status":"CONFLICT","action":"APPROVE"},
+    {"field_label":"Uptime hedefi","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Ölçüm periyodu","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Uptime cezası","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Değişen parçanın garanti süresi","extraction_status":"AMBIGUOUS","action":"CONFIRM_AMBIGUITY"},
+    {"field_label":"Üretici yetki belgesi","extraction_status":"AMBIGUOUS","action":"CONFIRM_AMBIGUITY"},
+    {"field_label":"Hizmet yeterlilik belgesi","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Referans sözleşme şartı","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Ödeme vadesi","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Genel cezai şart oranı / tutarı","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Cezanın uygulanma koşulu ve hesaplama esası","extraction_status":"FOUND","action":"APPROVE"},
+    {"field_label":"Maksimum genel ceza sınırı","extraction_status":"FOUND","action":"APPROVE"}
+  ]
+}
