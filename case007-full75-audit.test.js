@@ -1,0 +1,37 @@
+'use strict';
+const assert=require('assert');
+global.window={__PRJ026_DATA__:{cases:[]}};
+require('./case007.js');
+require('./case007-review-v033.js');
+require('./case007-full75-v034.js');
+const c=window.__PRJ026_DATA__.cases.find(x=>x.id==='CASE_007');
+assert(c,'CASE_007 must load');
+assert.strictEqual(c.fields.length,75);
+const counts=c.fields.reduce((a,f)=>(a[f.extraction_status]=(a[f.extraction_status]||0)+1,a),{});
+assert.deepStrictEqual(counts,{FOUND:37,AMBIGUOUS:11,NOT_FOUND:26,CONFLICT:1});
+assert.strictEqual(c.review_queue.length,25);
+assert.strictEqual(c.review_queue.filter(x=>x.queue_status==='RESOLVED').length,22);
+assert.strictEqual(c.review_queue.filter(x=>x.queue_status==='PENDING').length,3);
+assert.strictEqual(c.manual_review_summary.review_count,3);
+assert.strictEqual(c.full75_audit.audited_previous_unknown,29);
+assert.strictEqual(c.full75_audit.true_not_found,26);
+assert.strictEqual(c.full75_audit.ambiguous_candidates,3);
+assert.strictEqual(c.full75_audit.unverified,0);
+assert.strictEqual(c.full75_audit.evidence_coverage_gate,'PASS');
+assert.strictEqual(c.full75_audit.canonical_publish_gate,'NEEDS_REVIEW');
+assert.strictEqual(c.acceptance.full_75_evidence_coverage,'PASS');
+assert.strictEqual(c.acceptance.full_75_field_acceptance,'NOT_COMPLETE_REVIEW_PENDING');
+assert.strictEqual(c.acceptance.evidence_gate.checked_fields,75);
+assert.strictEqual(c.acceptance.coverage_ratio,0.653333);
+assert.strictEqual(c.acceptance.required_coverage_ratio,0.709677);
+for(const key of ['scope.accessory_inclusion','sla.service_24x7_required','parts.mandatory_stock_items']){
+  const f=c.fields.find(x=>x.field_key===key);
+  assert(f,`${key} missing`); assert.strictEqual(f.extraction_status,'AMBIGUOUS'); assert.strictEqual(f.review_status,'PENDING'); assert(f.source_document_id); assert(f.source_clause); assert(f.source_text_short);
+}
+const iso=c.fields.find(x=>x.field_key==='qualification.iso_certificates');
+assert.strictEqual(iso.extraction_status,'NOT_FOUND');
+assert.strictEqual(iso.full75_audit_disposition,'TRUE_NOT_FOUND');
+const repair=c.fields.find(x=>x.field_key==='sla.repair_time_no_part');
+assert.strictEqual(repair.extraction_status,'CONFLICT');
+assert.strictEqual(repair.review_status,'APPROVED');
+console.log(JSON.stringify({pass:true,case:c.id,active_version:c.active_version,counts,pending_reviews:3,evidence_gate:c.full75_audit.evidence_coverage_gate,publish_gate:c.full75_audit.canonical_publish_gate},null,2));
