@@ -1,0 +1,17 @@
+{
+  "case_id":"CASE_007",
+  "canonical_case_id":"BA-2026-ANKARA-SINCAN-0007",
+  "version":"v0.34",
+  "audit_type":"FULL75_NEGATIVE_AND_SEMANTIC_EVIDENCE_AUDIT",
+  "scope":"3. Kısım – Datex Anestezi Cihazları only",
+  "source_workbook_drive_id":"1ba_h3BUsDy4_6tgZ5GOTuZFO8enlECOf",
+  "source_workbook_write_readback":"PASS",
+  "prior_unknown":29,
+  "result":{"true_not_found":26,"ambiguous_candidates":3,"unverified":0,"evidence_coverage_gate":"PASS","canonical_publish_gate":"NEEDS_REVIEW","production_promotion":"NOT_APPLIED"},
+  "semantic_review_pending":[
+    {"field_key":"scope.accessory_inclusion","status":"AMBIGUOUS","reason":"AKSESUAR nitelikli ek kalemleri mevcut; maliyet/dahiliyet sorumluluğu açık değil.","source":"Teknik Şartname s.6-7 Md.7 + MKYS Ek"},
+    {"field_key":"sla.service_24x7_required","status":"AMBIGUOUS","reason":"Kesintisiz çalışma yükümlülüğü var; açık 7/24 servis/çağrı organizasyonu yok.","source":"Teknik Şartname s.3 Md.2.2.14"},
+    {"field_key":"parts.mandatory_stock_items","status":"AMBIGUOUS","reason":"Gerekli parçaları hazır bulundurma yükümlülüğü var; spesifik zorunlu stok listesi/miktarı yok.","source":"Teknik Şartname s.2 Md.2.2.2 + s.6-12 MKYS Ek"}
+  ],
+  "guardrails":{"no_not_found_promoted_without_evidence":true,"ambiguous_not_promoted_to_found":true,"conflict_preserved":true,"out_of_scope_lot_requirements_excluded":true}
+}
