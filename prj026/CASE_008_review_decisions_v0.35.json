@@ -1,0 +1,35 @@
+{
+  "case_id": "CASE_008",
+  "batch_id": "CASE_008-HR-20261014-01",
+  "reviewed_by": "Erdem",
+  "reviewed_at": "2026-10-14T09:57:43+03:00",
+  "decision_summary": {
+    "APPROVE": 9,
+    "CONFIRM_AMBIGUITY": 9,
+    "APPROVE_PRESERVE_CONFLICT": 2
+  },
+  "decisions": [
+    {"field_key":"scope.spare_parts_inclusion","field_label":"Yedek Parça Dahiliyeti","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"scope.pm_kit_inclusion","field_label":"PM Kit Dahiliyeti","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"scope.accessory_inclusion","field_label":"Aksesuar","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"pm.annual_count","field_label":"Yıllık PM adedi","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"sla.fault_notification_channel","field_label":"Arıza bildirim kanalı","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"sla.remote_support_time","field_label":"Uzaktan destek süresi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"sla.onsite_response_time","field_label":"Yerinde müdahale süresi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"sla.repair_time_no_part","field_label":"Parçasız onarım süresi","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"sla.repair_time_local_stock_part","field_label":"Yerel stoktan parçayla onarım süresi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"sla.repair_time_overseas_stock_part","field_label":"Yurtdışı stoktan parçayla onarım süresi","source_status":"CONFLICT","decision":"APPROVE_PRESERVE_CONFLICT"},
+    {"field_key":"uptime.target","field_label":"Uptime hedefi","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"uptime.penalty","field_label":"Uptime cezası","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"parts.imported_part_exception","field_label":"İthal parça istisnası","source_status":"CONFLICT","decision":"APPROVE_PRESERVE_CONFLICT"},
+    {"field_key":"qualification.manufacturer_authorization","field_label":"Üretici yetki belgesi","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"qualification.distributor_channel_partner_certificate","field_label":"Distribütör / kanal partner belgesi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"qualification.training_certificates","field_label":"Eğitim sertifikaları","source_status":"FOUND","decision":"APPROVE"},
+    {"field_key":"qualification.user_technical_staff_training","field_label":"Kullanıcı ve teknik personel eğitimi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"case.city_district","field_label":"Şehir / ilçe","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"case.contract_duration","field_label":"Toplam sözleşme süresi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"},
+    {"field_key":"case.contract_start_end_dates","field_label":"Sözleşme başlangıç ve bitiş tarihi","source_status":"AMBIGUOUS","decision":"CONFIRM_AMBIGUITY"}
+  ],
+  "semantic_rule": "AMBIGUOUS and CONFLICT extraction_status values remain unchanged; human review does not inflate them to FOUND.",
+  "result": "COMPLETED"
+}
